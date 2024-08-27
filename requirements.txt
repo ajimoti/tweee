@@ -1,0 +1,11 @@
+apscheduler==3.10.4
+beautifulsoup4==4.12.3
+Django==4.2.7
+environ==1.0
+openai==1.42.0
+praw==7.7.1
+pytrends==4.9.2
+Requests==2.32.3
+schedule==1.2.2
+tweepy==4.14.0
+twikit==2.1.3

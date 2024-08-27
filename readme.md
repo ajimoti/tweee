@@ -22,3 +22,11 @@ To detach from the screen session and keep the bot running, press Ctrl+A followe
 
 To reattach to the screen session later
 screen -r twitter-bot# tweee
+
+
+run `pipreqs .` to generate requirements.txt
+run `black .` to format the code
+run `isort .` to sort the imports
+run `flake8 .` to check for linting errors
+run `mypy .` to check for type errors
+run `pytest .` to run the tests
