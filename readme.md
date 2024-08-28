@@ -30,3 +30,6 @@ run `isort .` to sort the imports
 run `flake8 .` to check for linting errors
 run `mypy .` to check for type errors
 run `pytest .` to run the tests
+
+
+Run `python manage.py post_trend_tweet` to post a tweet about a trending topic

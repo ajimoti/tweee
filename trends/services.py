@@ -16,8 +16,6 @@ from datetime import timedelta
 # from twitter_bot_project.settings import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT
 
 logger = logging.getLogger(__name__)
-
-
 class TwitterService:
     def __init__(self, client=None, account=None):
         self.client = None
@@ -31,6 +29,26 @@ class TwitterService:
 
         if not self.client:
             self.client = self.get_account_client(Account.DOPESHI)
+
+    def split_into_tweets(self, text, max_length=270):
+        words = text.split()
+        chunks = []
+        current_chunk = []
+        current_length = 0
+
+        for word in words:
+            if current_length + len(word) + 1 <= max_length:  # +1 for space
+                current_chunk.append(word)
+                current_length += len(word) + 1
+            else:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = [word]
+                current_length = len(word)
+
+        if current_chunk:
+            chunks.append(' '.join(current_chunk))
+
+        return chunks
 
     def get_account_client(self, account):
         if account == Account.DOPESHI:
@@ -62,6 +80,44 @@ class TwitterService:
             response = self.client.create_tweet(text=text)
             logger.info(f"Posted tweet: {text}")
             return response
+        except tweepy_errors.Forbidden as e:
+            logger.error(f"Twitter error: {e}")
+            return None
+
+    def post_tweet_thread(self, tweet_texts, in_reply_to_id=None):
+        try:
+            # if tweet_texts is a string, convert it to a list
+            if isinstance(tweet_texts, str):
+                if len(tweet_texts) <= 280:
+                    response = self.client.create_tweet(text=tweet_texts, in_reply_to_tweet_id=in_reply_to_id)
+                    return response
+                else:
+                    text_list = self.split_into_tweets(tweet_texts)
+            elif isinstance(tweet_texts, list):
+                text_list = tweet_texts
+            else:
+                raise ValueError("Invalid tweet_texts type")
+            
+            previous_tweet_id = in_reply_to_id
+            total_tweets = len(text_list)
+            
+            for index, text in enumerate(text_list, start=1):
+                # Add numbering to each tweet
+                numbered_text = f"({index}/{total_tweets}) {text}"
+                
+                # Ensure the tweet doesn't exceed 280 characters
+                if len(numbered_text) > 280:
+                    numbered_text = numbered_text[:277] + "..."
+                
+                if previous_tweet_id:
+                    response = self.client.create_tweet(text=numbered_text, in_reply_to_tweet_id=previous_tweet_id)
+                else:
+                    response = self.client.create_tweet(text=numbered_text)
+                
+                previous_tweet_id = response.data['id']
+                logger.info(f"Posted tweet {index}/{total_tweets} in thread: {numbered_text}")
+            
+            return response  # Return the response of the last tweet in the thread
         except tweepy_errors.Forbidden as e:
             logger.error(f"Twitter error: {e}")
             return None
@@ -128,10 +184,10 @@ class OpenAIService:
             ],
         )
         summary = completion.choices[0].message.content.strip('"')
-        if len(summary) > 250:
-            raise ValueError(f"Summary is too long for {trend}")
+        # if len(summary) > 250:
+        #     raise ValueError(f"Summary is too long for {trend}")
 
-        return summary
+        return prompt, summary
 
     def generate_tweet(self, trend, context, category):
         prompt = self.select_prompt(category)
@@ -153,7 +209,7 @@ class OpenAIService:
             ],
         )
         tweet = response.choices[0].message.content.strip()
-        return tweet
+        return full_prompt, tweet
 
     def select_prompt(self, category):
         prompts = categorized_prompts.get(category, categorized_prompts["general"])
@@ -285,18 +341,24 @@ class TrendsService:
                 continue
 
             category = self.openai_service.categorize_tweet(context)
-            tweet_text = self.openai_service.generate_tweet(
+            prompt, tweet_text = self.openai_service.generate_tweet(
                 trend_name, context, category
             )
             GeneratedTweet.objects.create(
-                trend=trend, tweet_text=tweet_text, for_account=Account.DOPESHI
+                trend=trend,
+                tweet_text=tweet_text,
+                for_account=Account.DOPESHI,
+                prompt=prompt
             )
             logger.info(f"Generated tweet for trend: {trend_name}")
 
             # Generate "why is trending" tweet
-            summary = self.openai_service.summarize_for_tweet(trend_name, context)
+            summary_prompt, summary = self.openai_service.summarize_for_tweet(trend_name, context)
             GeneratedTweet.objects.create(
-                trend=trend, tweet_text=summary, for_account=Account.WHY_TRENDING
+                trend=trend,
+                tweet_text=summary,
+                for_account=Account.WHY_TRENDING,
+                prompt=summary_prompt
             )
             logger.info(f"Generated tweet summary for trend: {trend_name}")
 
@@ -304,8 +366,6 @@ class TrendsService:
         """Post a tweet for a trend on all accounts"""
 
         for account in Account.choices:
-            if account == Account.DOPESHI:
-                continue
 
             account_value = account[0]
             print(f"Posting tweet for account: {account_value}")
@@ -313,18 +373,25 @@ class TrendsService:
                 GeneratedTweet.objects.filter(
                     posted_at__isnull=True, for_account=account_value
                 )
+                .select_related("trend")
                 .order_by("created_at")
                 .first()
             )
             if tweet:
-                response = self.twitter_service.with_account(account_value).post_tweet(
-                    tweet.tweet_text
-                )
+                twitter_service = self.twitter_service.with_account(account_value)
+            
+                # If the tweet is longer than 280 characters, post a thread
+                response = twitter_service.post_tweet_thread(tweet.tweet_text)
 
                 if response:
-                    tweet.tweet_id = response.data["id"]
+                    tweet.tweet_id = response.data['id']
                     tweet.posted_at = timezone.now()
                     tweet.save()
-                    logger.info(f"Tweet posted for trend: {tweet.trend.name}")
-            else:
-                logger.error(f"Failed to post tweet for trend: {tweet.trend.name}")
+                    logger.info(f"Posted tweet for trend: {tweet.trend.name}")
+                    
+                    if account_value == Account.WHY_TRENDING:
+                        response = twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
+                        logger.info(f"Posted trend context thread: {tweet.trend.name}")
+                        print(f"Posted trend context thread: {tweet.trend.name}")
+                else:
+                    logger.error(f"Failed to post tweet thread for trend: {tweet.trend.name}")

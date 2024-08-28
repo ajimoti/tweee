@@ -17,6 +17,7 @@ class Trend(models.Model):
 
 class GeneratedTweet(models.Model):
     trend = models.ForeignKey(Trend, on_delete=models.CASCADE)
+    prompt = models.TextField(null=True, blank=True)
     tweet_text = models.TextField()
     for_account = models.CharField(
         max_length=20, choices=Account.choices, default=Account.DOPESHI

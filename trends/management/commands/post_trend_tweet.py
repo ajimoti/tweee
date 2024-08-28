@@ -13,4 +13,4 @@ class Command(BaseCommand):
         trends_service.process_trends()
 
         # we will use why_trending twitter client for this part
-        # trends_service.post_trend_tweet()
+        trends_service.post_trend_tweet()
