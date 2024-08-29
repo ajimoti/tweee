@@ -23,3 +23,5 @@ Thumbs.db
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+db.sqlite3
