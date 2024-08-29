@@ -8,6 +8,7 @@ class TrendsConfig(AppConfig):
     name = "trends"
 
     def ready(self):
-        from trends.tasks import start_trending_scheduler
+        pass
+        # from trends.tasks import start_trending_scheduler
 
-        start_trending_scheduler()
+        # start_trending_scheduler()
