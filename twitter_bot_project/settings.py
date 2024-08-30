@@ -123,11 +123,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+    
+CELERY_BROKER_URL = "redis://localhost:6379/0"  # Example using Redis
+CELERY_BEAT_SCHEDULE = {
+    "run_my_task_every_15_minutes": {
+        "task": "trends.tasks.process",
+        "schedule": 900,  # 15 minutes in seconds
+    },
+}
 
 DOPESHI_TWITTER_API_KEY = env("DOPESHI_TWITTER_API_KEY")
 DOPESHI_TWITTER_API_SECRET = env("DOPESHI_TWITTER_API_SECRET")
@@ -148,6 +157,3 @@ WHY_TRENDING_TWITTER_BEARER_TOKEN = env("WHY_TRENDING_TWITTER_BEARER_TOKEN")
 REDDIT_CLIENT_ID = env("REDDIT_CLIENT_ID")
 REDDIT_CLIENT_SECRET = env("REDDIT_CLIENT_SECRET")
 REDDIT_USER_AGENT = env("REDDIT_USER_AGENT")
-
-STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")

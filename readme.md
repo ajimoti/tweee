@@ -33,3 +33,7 @@ run `pytest .` to run the tests
 
 
 Run `python manage.py post_trend_tweet` to post a tweet about a trending topic
+
+In two seperate terminals, run the following commands to run the celery worker and beat
+run `celery -A twitter_bot_project worker --loglevel=info` to run the celery worker
+run `celery -A twitter_bot_project beat --loglevel=info` to run the celery beat

@@ -378,10 +378,14 @@ class TrendsService:
                 .first()
             )
             if tweet:
+                if account_value == Account.WHY_TRENDING:
+                    if len(tweet.tweet_text) > 280:
+                        tweet_text = tweet.tweet_text[:277] + "..."
+                        
                 twitter_service = self.twitter_service.with_account(account_value)
             
                 # If the tweet is longer than 280 characters, post a thread
-                response = twitter_service.post_tweet_thread(tweet.tweet_text)
+                response = twitter_service.post_tweet_thread(tweet_text)
 
                 if response:
                     tweet.tweet_id = response.data['id']

@@ -1,12 +1,16 @@
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 from trends.services import TwitterService, OpenAIService, TrendsService
+from celery import shared_task
 
 
-def start_trending_scheduler():
-    scheduler = BackgroundScheduler()
+@shared_task
+def process():
     twitter_service = TwitterService()
     openai_service = OpenAIService()
     trends_service = TrendsService(twitter_service, openai_service)
-
-    scheduler.add_job(trends_service.post_trend_tweet, "interval", minutes=15)
-    scheduler.start()
+    
+    print("Processing trends")
+    trends_service.process_trends()
+    
+    print("Posting trend tweets")
+    trends_service.post_trend_tweet()

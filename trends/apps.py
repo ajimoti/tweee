@@ -1,14 +1,14 @@
 from django.apps import AppConfig
 
-# from .tasks import start_trending_scheduler
+# from .tasks import process
 
 
 class TrendsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "trends"
 
-    def ready(self):
-        pass
-        # from trends.tasks import start_trending_scheduler
+    # def ready(self):
+    #     pass
+        # from trends.tasks import process
 
-        # start_trending_scheduler()
+        # process()
