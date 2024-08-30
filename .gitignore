@@ -25,3 +25,5 @@ Thumbs.db
 .ipynb_checkpoints/
 
 db.sqlite3
+
+celerybeat-schedule
