@@ -130,11 +130,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
     
-CELERY_BROKER_URL = "redis://localhost:6379/0"  # Example using Redis
+CELERY_BROKER_URL = env("REDIS_URL")
 CELERY_BEAT_SCHEDULE = {
     "run_my_task_every_15_minutes": {
         "task": "trends.tasks.process",
-        "schedule": 900,  # 15 minutes in seconds
+        "schedule": env("CELERY_BEAT_SCHEDULE_PROCESS"),  # 15 minutes in seconds
     },
 }
 
