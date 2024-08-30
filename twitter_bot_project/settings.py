@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import environ
 import os
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -131,10 +132,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
     
 CELERY_BROKER_URL = env("REDIS_URL")
+schedule_minutes = env.int("CELERY_BEAT_SCHEDULE_MINUTES", default=15)
+
 CELERY_BEAT_SCHEDULE = {
     "run_my_task_every_15_minutes": {
         "task": "trends.tasks.process",
-        "schedule": env("CELERY_BEAT_SCHEDULE_PROCESS"),  # 15 minutes in seconds
+        "schedule": crontab(minute=f'*/{schedule_minutes}'),
     },
 }
 
