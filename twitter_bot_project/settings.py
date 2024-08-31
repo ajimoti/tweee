@@ -141,6 +141,11 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# CELERYD_HIJACK_ROOT_LOGGER = False
+# CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+# CELERY_WORKER_LOG_FORMAT = '[%(asctime)s: %(levelname)s/%(processName)s] %(message)s'
+# CELERY_WORKER_TASK_LOG_FORMAT = '[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s'
+
 DOPESHI_TWITTER_API_KEY = env("DOPESHI_TWITTER_API_KEY")
 DOPESHI_TWITTER_API_SECRET = env("DOPESHI_TWITTER_API_SECRET")
 DOPESHI_TWITTER_ACCESS_TOKEN = env("DOPESHI_TWITTER_ACCESS_TOKEN")

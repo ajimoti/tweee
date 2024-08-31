@@ -377,10 +377,12 @@ class TrendsService:
                 .order_by("created_at")
                 .first()
             )
+            
             if tweet:
+                tweet_text = tweet.tweet_text
                 if account_value == Account.WHY_TRENDING:
-                    if len(tweet.tweet_text) > 280:
-                        tweet_text = tweet.tweet_text[:277] + "..."
+                    if len(tweet_text) > 280:
+                        tweet_text = tweet_text[:277] + "..."
                         
                 twitter_service = self.twitter_service.with_account(account_value)
             
