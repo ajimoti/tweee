@@ -6,9 +6,9 @@ class Command(BaseCommand):
     help = "Post a generated tweet about a trending topic"
 
     def handle(self, *args, **options):
-        twitter_service = TwitterService()
-        openai_service = OpenAIService()
-        trends_service = TrendsService(twitter_service, openai_service)
+        # twitter_service = TwitterService()
+        # openai_service = OpenAIService()
+        trends_service = TrendsService(TwitterService, OpenAIService)
 
         trends_service.process_trends()
 
