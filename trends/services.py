@@ -218,9 +218,23 @@ class OpenAIService:
 
 
 class TrendsService:
-    def __init__(self, twitter_service, openai_service):
-        self.twitter_service = twitter_service
-        self.openai_service = openai_service
+    def __init__(self, twitter_service_class, openai_service_class):
+        self._twitter_service = None
+        self._openai_service = None
+        self._twitter_service_class = twitter_service_class
+        self._openai_service_class = openai_service_class
+
+    @property
+    def twitter_service(self):
+        if self._twitter_service is None:
+            self._twitter_service = self._twitter_service_class()
+        return self._twitter_service
+
+    @property
+    def openai_service(self):
+        if self._openai_service is None:
+            self._openai_service = self._openai_service_class()
+        return self._openai_service
 
     def get_google_trends(self, use_realtime=False):
         pytrends = TrendReq()
@@ -327,7 +341,13 @@ class TrendsService:
 
     def process_trends(self):
         trends = self.get_google_trends()
+        batch_size = 10  # Adjust based on your needs
 
+        for i in range(0, len(trends), batch_size):
+            batch = trends[i:i+batch_size]
+            self.process_trend_batch(batch)
+
+    def process_trend_batch(self, trends):
         for trend_name in trends:
             context = self.get_trend_context(trend_name)
             trend, created = Trend.objects.get_or_create(
@@ -366,38 +386,31 @@ class TrendsService:
         """Post a tweet for a trend on all accounts"""
 
         for account in Account.choices:
-
             account_value = account[0]
             print(f"Posting tweet for account: {account_value}")
-            tweet = (
-                GeneratedTweet.objects.filter(
-                    posted_at__isnull=True, for_account=account_value
-                )
-                .select_related("trend")
-                .order_by("created_at")
-                .first()
-            )
+            tweet = GeneratedTweet.objects.filter(
+                posted_at__isnull=True, for_account=account_value
+            ).select_related("trend").order_by("created_at").first()
             
             if tweet:
-                tweet_text = tweet.tweet_text
-                if account_value == Account.WHY_TRENDING:
-                    if len(tweet_text) > 280:
-                        tweet_text = tweet_text[:277] + "..."
-                        
-                twitter_service = self.twitter_service.with_account(account_value)
-            
-                # If the tweet is longer than 280 characters, post a thread
-                response = twitter_service.post_tweet_thread(tweet_text)
+                self.post_single_tweet(tweet, account_value)
 
-                if response:
-                    tweet.tweet_id = response.data['id']
-                    tweet.posted_at = timezone.now()
-                    tweet.save()
-                    logger.info(f"Posted tweet for trend: {tweet.trend.name}")
-                    
-                    if account_value == Account.WHY_TRENDING:
-                        response = twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
-                        logger.info(f"Posted trend context thread: {tweet.trend.name}")
-                        print(f"Posted trend context thread: {tweet.trend.name}")
-                else:
-                    logger.error(f"Failed to post tweet thread for trend: {tweet.trend.name}")
+    def post_single_tweet(self, tweet, account_value):
+        tweet_text = tweet.tweet_text
+        if account_value == Account.WHY_TRENDING:
+            tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
+        
+        twitter_service = self.twitter_service.with_account(account_value)
+        response = twitter_service.post_tweet_thread(tweet_text)
+
+        if response:
+            tweet.tweet_id = response.data['id']
+            tweet.posted_at = timezone.now()
+            tweet.save()
+            logger.info(f"Posted tweet for trend: {tweet.trend.name}")
+            
+            if account_value == Account.WHY_TRENDING:
+                twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
+                logger.info(f"Posted trend context thread: {tweet.trend.name}")
+        else:
+            logger.error(f"Failed to post tweet thread for trend: {tweet.trend.name}")

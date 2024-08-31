@@ -1,8 +1,6 @@
-# from apscheduler.schedulers.background import BackgroundScheduler
-from trends.services import TwitterService, OpenAIService, TrendsService
 from celery import shared_task
 from django.core.cache import cache
-
+from trends.services import TwitterService, OpenAIService, TrendsService
 
 @shared_task
 def process():
@@ -12,9 +10,7 @@ def process():
 
     if acquire_lock():
         try:
-            twitter_service = TwitterService()
-            openai_service = OpenAIService()
-            trends_service = TrendsService(twitter_service, openai_service)
+            trends_service = TrendsService(TwitterService, OpenAIService)
             
             print("Processing trends")
             trends_service.process_trends()
