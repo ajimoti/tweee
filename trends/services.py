@@ -387,6 +387,10 @@ class TrendsService:
 
         for account in Account.choices:
             account_value = account[0]
+            
+            if account_value in settings.PAUSE_ACCOUNT:
+                continue
+            
             print(f"Posting tweet for account: {account_value}")
             tweet = GeneratedTweet.objects.filter(
                 posted_at__isnull=True, for_account=account_value
