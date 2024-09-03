@@ -410,6 +410,7 @@ class TrendsService:
                 
     def process_latest_trend(self):
         trends = self.get_google_trends()
+        print(f"trends: {trends}")
         
         for trend_name in trends: 
             if Trend.objects.filter(name=trend_name).exists():
@@ -444,6 +445,7 @@ class TrendsService:
             )
             
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
+            
             break
             
 
