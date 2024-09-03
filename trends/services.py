@@ -432,7 +432,7 @@ class TrendsService:
             )
             GeneratedTweet.objects.create(
                 trend=trend,
-                tweet_text=tweet_text,
+                tweet_text=tweet_text.replace('"', ''),
                 for_account=Account.DOPESHI,
                 prompt=prompt
             )
@@ -442,7 +442,7 @@ class TrendsService:
             summary_prompt, summary = self.openai_service.summarize_for_tweet(trend, context)
             GeneratedTweet.objects.create(
                 trend=trend,
-                tweet_text=summary,
+                tweet_text=summary.replace('"', ''),
                 for_account=Account.WHY_TRENDING,
                 prompt=summary_prompt
             )
