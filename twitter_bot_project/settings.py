@@ -13,13 +13,13 @@ import environ
 import os
 from pathlib import Path
 from celery.schedules import crontab
+# from .slack_logging import SlackHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
 environ.Env.read_env(env_file=BASE_DIR / ".env")
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -30,7 +30,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="").split(",")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(",")
 
 
 # Application definition
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'twitter_bot_project.middleware.SlackExceptionMiddleware',
 ]
 
 ROOT_URLCONF = "twitter_bot_project.urls"
@@ -145,6 +146,58 @@ CELERY_BEAT_SCHEDULE = {
 # CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # CELERY_WORKER_LOG_FORMAT = '[%(asctime)s: %(levelname)s/%(processName)s] %(message)s'
 # CELERY_WORKER_TASK_LOG_FORMAT = '[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s'
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": "django_error.log",
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file", "console"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["file", "console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
+ENABLE_SLACK_LOGGING = env('ENABLE_SLACK_LOGGING')
+if ENABLE_SLACK_LOGGING:
+    LOGGING["handlers"]["slack"] = {
+        "class": "twitter_bot_project.slack_logging.SlackHandler",
+        "webhook_url": env("SLACK_ERROR_LOGGER_WEBHOOK"),
+        "level": "ERROR",
+    }
+    LOGGING["loggers"]["django"]["handlers"].append("slack")
+    LOGGING["loggers"]["django.request"]["handlers"].append("slack")
+
 
 DOPESHI_TWITTER_API_KEY = env("DOPESHI_TWITTER_API_KEY")
 DOPESHI_TWITTER_API_SECRET = env("DOPESHI_TWITTER_API_SECRET")

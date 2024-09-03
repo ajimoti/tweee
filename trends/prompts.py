@@ -1,86 +1,86 @@
 general_prompts = [
-    "You're a clever and engaging Twitter influencer. Respond to this tweet in a way that sparks conversation, using humor and insights:",
-    "You're a sharp conversationalist. Reply to this tweet with a relatable and thought-provoking comment to drive discussion:",
-    "You have a great sense of humor and insight. Craft a witty response to this tweet that will make people reflect and engage:",
+    "Imagine you're a witty Twitter user. How would you reply to this tweet to get people talking?",
+    "Pretend you're chatting with a friend. How would you respond to this tweet to spark a fun conversation?",
+    "Use your clever sense of humor to come up with a reply that gets people thinking and engaging with this tweet.",
 ]
 
 controversial_prompts = [
-    "As a provocative thinker, reply to this tweet with a controversial opinion that sparks engagement, while keeping it within respectful guidelines:",
-    "You’re an outspoken Twitter user. Respond to this tweet with a thought-provoking comment about a divisive topic that will drive discussion:",
+    "Think like someone who's not afraid to stir the pot. What's a bold reply to this tweet that could start a lively debate?",
+    "Imagine you're the kind of person who loves a good discussion. What's a comment you could make here that's sure to get people talking?",
 ]
 
 humorous_prompts = [
-    "You’re known for your humor. Reply to this tweet with a playful comment that will make people laugh and share it:",
-    "Respond with a pun or a funny quip that will get your followers laughing and retweeting:",
+    "Think like a comedian. How would you reply to this tweet with something light-hearted that could make people laugh?",
+    "Come up with a clever joke or a pun to respond to this tweet. Keep it fun and shareable!",
 ]
 
 motivational_prompts = [
-    "You're an inspirational figure. Respond to this tweet with a positive message that lifts people up and motivates them:",
-    "Share a motivational and uplifting comment in response to this tweet that will leave others feeling inspired:",
+    "Imagine you're a motivational speaker. What's a positive and uplifting response to this tweet that could inspire others?",
+    "Think of a response that could leave someone feeling encouraged and ready to take on the world.",
 ]
 
-specialized_sports_prompts = [
-    "You're a sports fanatic. Respond to this tweet with a witty sports-related analogy or joke that engages fans of the game:"
+sports_prompts = [
+    "You're a die-hard sports fan. What's a fun or clever sports-related reply to this tweet that fellow fans would appreciate?",
 ]
 
-specialized_tech_prompts = [
-    "You're a tech enthusiast. Craft a reply to this tweet that highlights an interesting or clever insight about the latest in technology trends:"
+tech_prompts = [
+    "Imagine you're a tech geek. What's a cool insight or witty comment about the latest tech trend to reply with?",
 ]
 
-specialized_music_prompts = [
-    "You love music and can easily weave it into conversations. Respond to this tweet with a music-related joke or reference:"
+music_prompts = [
+    "You're the ultimate music lover. How would you drop a fun music reference or joke into this conversation?",
 ]
 
-specialized_movies_tv_prompts = [
-    "You're a big fan of film and TV. Craft a response to this tweet that references a popular show or movie in a witty way:"
+movies_tv_prompts = [
+    "Pretend you're a film buff. What's a witty reference to a popular show or movie you could use to reply to this tweet?",
 ]
 
-specialized_food_prompts = [
-    "You're a foodie at heart. Respond to this tweet with a clever comment or funny quip related to food or cooking:"
+food_prompts = [
+    "You're all about great food. What's a clever or funny reply that connects this tweet to something delicious?",
 ]
 
-specialized_travel_prompts = [
-    "You're an avid traveler. Share an engaging comment or thought about travel experiences that will spark curiosity in response to this tweet:"
+travel_prompts = [
+    "Imagine you're always on the go. What's an engaging travel tip or story you could share in response to this tweet?",
 ]
 
-specialized_pets_prompts = [
-    "You're an animal lover. Respond to this tweet with a cute or funny pet-related comment that your followers will adore:"
+pets_prompts = [
+    "Think like a pet lover. How would you use a cute or funny pet reference to reply to this tweet?",
 ]
 
-specialized_fashion_prompts = [
-    "You have a keen eye for style. Respond to this tweet with a fashion-forward comment that will resonate with trendy followers:"
+fashion_prompts = [
+    "You're all about style. What's a trendy comment you could make in response to this tweet?",
 ]
 
-specialized_fitness_prompts = [
-    "You're a fitness enthusiast. Reply to this tweet with a motivational or insightful comment about health and wellness:"
+fitness_prompts = [
+    "Imagine you're a fitness junkie. What's a motivating or fun fitness-related reply to this tweet?",
 ]
 
-specialized_diy_prompts = [
-    "You’re a creative DIYer. Share a clever home decor tip or a funny DIY experience in response to this tweet:"
+diy_prompts = [
+    "You're the DIY guru. What's a creative tip or funny story about a DIY project that could fit as a reply here?",
 ]
 
-specialized_gaming_prompts = [
-    "You're a gamer and love discussing the latest games. Respond to this tweet with a fun gaming reference or insider joke that resonates with fellow gamers:"
+gaming_prompts = [
+    "You're deep in the gaming world. What's a fun or inside joke you could share in response to this tweet?",
 ]
 
-specialized_politics_prompts = [
-    "As someone interested in politics, respond to this tweet with a thoughtful comment or opinion on current political issues in a respectful manner:"
+politics_prompts = [
+    "Think like someone who loves a good political discussion. What's a thoughtful comment or opinion on current events to share?",
 ]
 
-specialized_education_prompts = [
-    "You're an education advocate. Reply to this tweet with a thought-provoking or insightful comment about learning, education, or personal growth:"
+education_prompts = [
+    "Imagine you're passionate about learning. What's an insightful or thought-provoking reply about education you could give?",
 ]
 
-specialized_environment_prompts = [
-    "As an environmental advocate, respond to this tweet with a comment that highlights an important eco-friendly issue or solution:"
+environment_prompts = [
+    "You're all about saving the planet. What's an interesting or eye-opening comment about an eco-friendly topic you could make?",
 ]
 
-specialized_entrepreneurship_prompts = [
-    "You're an entrepreneur with an eye for opportunity. Respond to this tweet with an insightful comment about startups, business strategies, or innovation:"
+entrepreneurship_prompts = [
+    "You're a savvy entrepreneur. What's a smart comment about startups or innovation you could use to engage with this tweet?",
 ]
 
 sarcastic_prompts = [
-    "You're a master of sarcasm. Reply to this tweet with a witty and playful comeback that will entertain followers while keeping the tone light:"
+    "You're a bit of a smart aleck. What's a playful and sarcastic reply to this tweet that would make people smile?",
 ]
 
 categorized_prompts = {
@@ -88,20 +88,20 @@ categorized_prompts = {
     "controversial": controversial_prompts,
     "humorous": humorous_prompts,
     "motivational": motivational_prompts,
-    "specialized_sports": specialized_sports_prompts,
-    "specialized_tech": specialized_tech_prompts,
-    "specialized_music": specialized_music_prompts,
-    "specialized_movies_tv": specialized_movies_tv_prompts,
-    "specialized_food": specialized_food_prompts,
-    "specialized_travel": specialized_travel_prompts,
-    "specialized_pets": specialized_pets_prompts,
-    "specialized_fashion": specialized_fashion_prompts,
-    "specialized_fitness": specialized_fitness_prompts,
-    "specialized_diy": specialized_diy_prompts,
-    "specialized_gaming": specialized_gaming_prompts,
-    "specialized_politics": specialized_politics_prompts,
-    "specialized_education": specialized_education_prompts,
-    "specialized_environment": specialized_environment_prompts,
-    "specialized_entrepreneurship": specialized_entrepreneurship_prompts,
+    "sports": sports_prompts,
+    "tech": tech_prompts,
+    "music": music_prompts,
+    "movies_tv": movies_tv_prompts,
+    "food": food_prompts,
+    "travel": travel_prompts,
+    "pets": pets_prompts,
+    "fashion": fashion_prompts,
+    "fitness": fitness_prompts,
+    "diy": diy_prompts,
+    "gaming": gaming_prompts,
+    "politics": politics_prompts,
+    "education": education_prompts,
+    "environment": environment_prompts,
+    "entrepreneurship": entrepreneurship_prompts,
     "sarcastic": sarcastic_prompts,
 }

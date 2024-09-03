@@ -166,19 +166,18 @@ class OpenAIService:
 
     def summarize_for_tweet(self, trend, texts):
         prompt = (
-            f"""You are a popular Twitter influencer known for your summarizing trending topics. 
-                Summarize the texts provided in a way that is easy to understand as a tweet. 
-                Keep it concise and strictly under 250 characters, use casual language 
-                Don't include unnecessary hashtags, Do NOT include any emojis.
-                You must keep it under 251 characters:\n\n"""
-            f"Topic: {trend}\n\nTweets: {texts}\n\nSummary:"
+            f"""Summarize the context provided in a way that is easy to understand as a tweet.
+            Topic: {trend}\n\Headlines: {texts}\n\nSummary:"""
         )
         completion = self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a Gen Z influencer skilled in summarizing trending topics based and generating tweets based on the context.",
+                    "content": """You are a Gen Z influencer skilled in summarizing trending topics and generating a tweet that summarizes the reason why the topic is trending based on the provided article headlines. 
+                        Keep it concise and strictly under 150 characters, use casual language 
+                        Dont include unnecessary hashtags, Do NOT include any emojis.
+                        You must keep it under 150 characters:""",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -191,11 +190,14 @@ class OpenAIService:
 
     def generate_tweet(self, trend, context, category):
         prompt = self.select_prompt(category)
-        prompt += f"""You are a popular Twitter influencer known for your {category} tweets. Craft a tweet about '{trend}' based on the following context. 
-                 Make sure to keep it under 250 characters, use casual language, and sound like a Gen Z influencer. 
-                 Don't include unnecessary hashtags, Don't include emojis unless it's common for the trend.
-                 Context: "{context}"
-                 Tweet:"""
+        # prompt += f"""You are a popular Twitter influencer known for your {category} tweets. 
+        #           Craft a tweet about '{trend}' based on the following context. 
+        #           Make sure to keep it under 250 characters, use casual language, 
+        #           and sound like a Gen Z influencer. 
+        #           Don't include unnecessary hashtags, Don't include emojis unless it's common for the trend.
+        #           Use slang and idiomatic expressions where appropriate.
+        #           Context: "{context}"
+        #           Tweet:"""
 
         full_prompt = prompt
         response = self.client.chat.completions.create(
@@ -203,7 +205,14 @@ class OpenAIService:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a Gen Z influencer known for your viral tweets.",
+                    "content": f"""You are a Gen Z influencer known for your viral {category} tweets.
+                        Craft a tweet about '{trend}' based on the following context. 
+                        Make sure to keep it under 150 characters, use casual language, 
+                        and sound like a Gen Z influencer. 
+                        Don't include unnecessary hashtags, Don't include emojis unless it's common for the trend.
+                        Use slang and idiomatic expressions where appropriate.
+                        Context: "{context}"
+                    """,
                 },
                 {"role": "user", "content": full_prompt},
             ],
@@ -397,12 +406,51 @@ class TrendsService:
             ).select_related("trend").order_by("created_at").first()
             
             if tweet:
-                self.post_single_tweet(tweet, account_value)
+                self.post_tweet(tweet, account_value)
+                
+    def process_latest_trend(self):
+        trends = self.get_google_trends()
+        
+        for trend_name in trends: 
+            if Trend.objects.filter(name=trend_name).exists():
+                logger.info(f"Trend already exists: {trend_name}")
+                continue
+            
+            context = self.get_trend_context(trend_name)
+            category = self.openai_service.categorize_tweet(context)
+            trend, created = Trend.objects.get_or_create(
+                name=trend_name, defaults={"context": context}
+            )
+            
+            if not created and trend.created_at > timezone.now() - timedelta(days=1):
+                """Skip trends that were created in the last 24 hours"""
+                continue
+            prompt, tweet_text = self.openai_service.generate_tweet(
+                trend, context, category
+            )
+            GeneratedTweet.objects.create(
+                trend=trend,
+                tweet_text=tweet_text,
+                for_account=Account.DOPESHI,
+                prompt=prompt
+            )
+            
+            summary_prompt, summary = self.openai_service.summarize_for_tweet(trend, context)
+            GeneratedTweet.objects.create(
+                trend=trend,
+                tweet_text=summary,
+                for_account=Account.WHY_TRENDING,
+                prompt=summary_prompt
+            )
+            
+            """Since we only want to process the first trend, we can break the loop after processing one trend"""
+            break
+            
 
-    def post_single_tweet(self, tweet, account_value):
+    def post_tweet(self, tweet, account_value):
         tweet_text = tweet.tweet_text
-        if account_value == Account.WHY_TRENDING:
-            tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
+        # if account_value == Account.WHY_TRENDING:
+        #     tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
         
         twitter_service = self.twitter_service.with_account(account_value)
         response = twitter_service.post_tweet_thread(tweet_text)
@@ -413,8 +461,8 @@ class TrendsService:
             tweet.save()
             logger.info(f"Posted tweet for trend: {tweet.trend.name}")
             
-            if account_value == Account.WHY_TRENDING:
-                twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
-                logger.info(f"Posted trend context thread: {tweet.trend.name}")
+            # if account_value == Account.WHY_TRENDING:
+            #     twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
+            #     logger.info(f"Posted trend context thread: {tweet.trend.name}")
         else:
             logger.error(f"Failed to post tweet thread for trend: {tweet.trend.name}")
