@@ -414,7 +414,7 @@ class TrendsService:
         
         for trend_name in trends: 
             if Trend.objects.filter(name=trend_name).exists():
-                logger.info(f"Trend already exists: {trend_name}")
+                print(f"Trend already exists: {trend_name}")
                 continue
             
             context = self.get_trend_context(trend_name)
@@ -425,7 +425,9 @@ class TrendsService:
             
             if not created and trend.created_at > timezone.now() - timedelta(days=1):
                 """Skip trends that were created in the last 24 hours"""
+                print(f"Trend already exists: {trend_name}")
                 continue
+            
             prompt, tweet_text = self.openai_service.generate_tweet(
                 trend, context, category
             )
@@ -436,6 +438,8 @@ class TrendsService:
                 prompt=prompt
             )
             
+            print(f"Generated tweet for trend: {trend_name}")
+            
             summary_prompt, summary = self.openai_service.summarize_for_tweet(trend, context)
             GeneratedTweet.objects.create(
                 trend=trend,
@@ -443,6 +447,8 @@ class TrendsService:
                 for_account=Account.WHY_TRENDING,
                 prompt=summary_prompt
             )
+            
+            print(f"Generated tweet summary for trend: {trend_name}")
             
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
             
