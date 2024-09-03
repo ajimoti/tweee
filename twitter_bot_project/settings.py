@@ -13,7 +13,7 @@ import environ
 import os
 from pathlib import Path
 from celery.schedules import crontab
-# from .slack_logging import SlackHandler
+from .slack_logging import SlackHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
