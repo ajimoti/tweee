@@ -167,7 +167,7 @@ class OpenAIService:
     def summarize_for_tweet(self, trend, texts):
         prompt = (
             f"""Summarize the context provided in a way that is easy to understand as a tweet.
-            Topic: {trend}\n\Headlines: {texts}\n\nSummary:"""
+            Topic: {trend} Headlines: {texts}"""
         )
         completion = self.client.chat.completions.create(
             model="gpt-4o-mini",
