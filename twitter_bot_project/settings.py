@@ -55,7 +55,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'twitter_bot_project.middleware.SlackExceptionMiddleware',
 ]
 
 ROOT_URLCONF = "twitter_bot_project.urls"
