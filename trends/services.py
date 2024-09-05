@@ -246,7 +246,7 @@ class TrendsService:
         return self._openai_service
 
     def get_google_trends(self, use_realtime=False):
-        pytrends = TrendReq()
+        pytrends = TrendReq(timeout=(10, 25), retries=3)
 
         if use_realtime:
             trending_searches = pytrends.realtime_trending_searches(pn="US")
@@ -448,8 +448,6 @@ class TrendsService:
             )
             
             print(f"Generated tweet summary for trend: {trend_name}")
-            
-            sent_tweet = True
             
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
             
