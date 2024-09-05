@@ -408,8 +408,8 @@ class TrendsService:
             if tweet:
                 self.post_tweet(tweet, account_value)
                 
-    def process_latest_trend(self):
-        trends = self.get_google_trends()
+    def process_latest_trend(self, use_realtime=False):
+        trends = self.get_google_trends(use_realtime)
         
         for trend_name in trends: 
             if Trend.objects.filter(name=trend_name).exists():
@@ -449,9 +449,12 @@ class TrendsService:
             
             print(f"Generated tweet summary for trend: {trend_name}")
             
+            sent_tweet = True
+            
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
             
-            break
+            # break 
+            return True
             
 
     def post_tweet(self, tweet, account_value):
