@@ -4,7 +4,7 @@ import requests
 import praw
 from googlesearch import search
 from django.utils import timezone
-from tweepy import Client, errors as tweepy_errors
+from tweepy import Client, errors as tweepy_errors, OAuth1UserHandler, API
 from openai import OpenAI
 from trends.models import Account, Trend, GeneratedTweet
 from pytrends.request import TrendReq
@@ -12,23 +12,36 @@ from django.conf import settings
 from .prompts import categorized_prompts
 from bs4 import BeautifulSoup
 from datetime import timedelta
+import requests
+from io import BytesIO
+from PIL import Image
+import os
+from django.conf import settings
+
 
 # from twitter_bot_project.settings import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT
 
 logger = logging.getLogger(__name__)
 class TwitterService:
-    def __init__(self, client=None, account=None):
+    def __init__(self, client=None, account=None, tweepy_api=None):
         self.client = None
+        self.tweepy_api = None
 
         if account:
             self.client = self.get_account_client(account)
+            self.auth = self.get_account_auth(account)
 
         if client:
             """If a client is provided, use it. Overrides the account client"""
             self.client = client
+            
+        if tweepy_api:
+            """If a auth is provided, use it. Overrides the account client"""
+            self.tweepy_api = tweepy_api
 
         if not self.client:
             self.client = self.get_account_client(Account.DOPESHI)
+            self.tweepy_api = self.get_account_tweepy_api(Account.DOPESHI)
 
     def split_into_tweets(self, text, max_length=270):
         words = text.split()
@@ -69,10 +82,32 @@ class TwitterService:
             )
 
         raise ValueError(f"Invalid account: {account}")
-
+    
+    def get_account_tweepy_api(self, account):
+        if account == Account.DOPESHI:
+            auth = OAuth1UserHandler(
+                settings.DOPESHI_TWITTER_API_KEY,
+                settings.DOPESHI_TWITTER_API_SECRET,
+                settings.DOPESHI_TWITTER_ACCESS_TOKEN,
+                settings.DOPESHI_TWITTER_ACCESS_SECRET,
+            )
+            
+            return API(auth)
+        elif account == Account.WHY_TRENDING:
+            auth = OAuth1UserHandler(
+                settings.WHY_TRENDING_TWITTER_API_KEY,
+                settings.WHY_TRENDING_TWITTER_API_SECRET,
+                settings.WHY_TRENDING_TWITTER_ACCESS_TOKEN,
+                settings.WHY_TRENDING_TWITTER_ACCESS_SECRET,
+            )
+            return API(auth)
+        
+        raise ValueError(f"Invalid account: {account}")
     def with_account(self, account):
         """Chainable method to set the account client"""
         self.client = self.get_account_client(account)
+        self.tweepy_api = self.get_account_tweepy_api(account)
+        
         return self
 
     def post_tweet(self, text):
@@ -118,6 +153,22 @@ class TwitterService:
                 logger.info(f"Posted tweet {index}/{total_tweets} in thread: {numbered_text}")
             
             return response  # Return the response of the last tweet in the thread
+        except tweepy_errors.Forbidden as e:
+            logger.error(f"Twitter error: {e}")
+            return None
+
+    def post_tweet_with_media(self, tweet_text, image_path):
+        try:
+            # Open the media file
+            with open(image_path, 'rb') as media_file:
+                # Upload the media
+                media = self.tweepy_api.media_upload(filename=image_path, file=media_file)
+                
+                # Post the tweet with the uploaded media
+                response = self.client.create_tweet(text=tweet_text, media_ids=[media.media_id])
+            
+            logger.info(f"Posted tweet with media: {tweet_text}")
+            return response
         except tweepy_errors.Forbidden as e:
             logger.error(f"Twitter error: {e}")
             return None
@@ -452,26 +503,65 @@ class TrendsService:
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
             
             # break 
-            print("returning true")
             return True
             
+    def get_related_image(self, trend):
+        search_url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            "key": settings.GOOGLE_CUSTOM_SEARCH_API_KEY,
+            "cx": settings.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
+            "q": trend,
+            "searchType": "image",
+            "num": 1,
+            "fileType": "jpg",
+            "safe": "active",
+            "rights": "cc_publicdomain|cc_attribute|cc_sharealike|cc_noncommercial|cc_nonderived"
+        }
+        response = requests.get(search_url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            if "items" in data and data["items"]:
+                image_url = data["items"][0]["link"]
+                image_response = requests.get(image_url)
+                if image_response.status_code == 200:
+                    image = Image.open(BytesIO(image_response.content))
+                    image_path = f"temp_{trend}.jpg"
+                    image.save(image_path)
+                    return image_path
+        return None
 
     def post_tweet(self, tweet, account_value):
         tweet_text = tweet.tweet_text
         # if account_value == Account.WHY_TRENDING:
         #     tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
         
+        # if account_value == Account.WHY_TRENDING:
+        #     tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
+        
         twitter_service = self.twitter_service.with_account(account_value)
-        response = twitter_service.post_tweet_thread(tweet_text)
-
-        if response:
-            tweet.tweet_id = response.data['id']
-            tweet.posted_at = timezone.now()
-            tweet.save()
-            logger.info(f"Posted tweet for trend: {tweet.trend.name}")
+        
+        if account_value == Account.WHY_TRENDING:
+            image_path = self.get_related_image(tweet.trend.name)
+            if image_path:
+                response = twitter_service.post_tweet_with_media(tweet_text, image_path)
+                os.remove(image_path)  # Clean up the temporary image file
+            else:
+                response = twitter_service.post_tweet_thread(tweet_text)
+        else:
+            response = twitter_service.post_tweet_thread(tweet_text)
             
             # if account_value == Account.WHY_TRENDING:
             #     twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
             #     logger.info(f"Posted trend context thread: {tweet.trend.name}")
+
+        if response:
+            tweet.tweet_id = response.data['id']
+            
+            # if account_value == Account.WHY_TRENDING:
+            #     twitter_service.post_tweet_thread(tweet.trend.context, in_reply_to_id=tweet.tweet_id)
+            #     logger.info(f"Posted trend context thread: {tweet.trend.name}")
+            tweet.posted_at = timezone.now()
+            tweet.save()
+            logger.info(f"Posted tweet for trend: {tweet.trend.name}")
         else:
             logger.error(f"Failed to post tweet thread for trend: {tweet.trend.name}")
