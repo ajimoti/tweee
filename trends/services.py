@@ -544,7 +544,7 @@ class TrendsService:
                 response = twitter_service.post_tweet_with_media(tweet_text, image_path)
                 os.remove(image_path)  # Clean up the temporary image file
             else:
-                print("No image found for trend: {tweet.trend.name}")
+                print(f"No image found for trend: {tweet.trend.name}")
                 response = twitter_service.post_tweet_thread(tweet_text)
         else:
             response = twitter_service.post_tweet_thread(tweet_text)
