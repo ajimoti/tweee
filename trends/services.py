@@ -528,6 +528,8 @@ class TrendsService:
                     image_path = f"temp_{trend}.jpg"
                     image.save(image_path)
                     return image_path
+        else:
+            print(f"Failed to get image for trend: {trend}, error: {response.status_code}, response: {response.text}")
         return None
 
     def post_tweet(self, tweet, account_value):
