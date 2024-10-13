@@ -535,8 +535,6 @@ class TrendsService:
         # if account_value == Account.WHY_TRENDING:
         #     tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
         
-        # if account_value == Account.WHY_TRENDING:
-        #     tweet_text = tweet_text[:277] + "..." if len(tweet_text) > 280 else tweet_text
         
         twitter_service = self.twitter_service.with_account(account_value)
         
@@ -546,6 +544,7 @@ class TrendsService:
                 response = twitter_service.post_tweet_with_media(tweet_text, image_path)
                 os.remove(image_path)  # Clean up the temporary image file
             else:
+                print("No image found for trend: {tweet.trend.name}")
                 response = twitter_service.post_tweet_thread(tweet_text)
         else:
             response = twitter_service.post_tweet_thread(tweet_text)
