@@ -403,7 +403,7 @@ class TrendsService:
             print(f"Posting tweet for account: {account_value}")
             tweet = GeneratedTweet.objects.filter(
                 posted_at__isnull=True, for_account=account_value
-            ).select_related("trend").order_by("created_at").first()
+            ).select_related("trend").order_by("-created_at").first()
             
             if tweet:
                 self.post_tweet(tweet, account_value)
@@ -452,6 +452,7 @@ class TrendsService:
             """Since we only want to process the first trend, we can break the loop after processing one trend"""
             
             # break 
+            print("returning true")
             return True
             
 
